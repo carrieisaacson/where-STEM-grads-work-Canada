@@ -88,4 +88,4 @@ dat_STEM$stem <- T
 
 dat <- merge(dat_nonSTEM, dat_STEM, all.x = T, all.y = T)
 
-write.csv(dat, "../Table - Major Field STEM vs NOC STEM.csv")
+write.csv(dat, "../Table - Major Field STEM vs NOC STEM.csv", row.names=F)
