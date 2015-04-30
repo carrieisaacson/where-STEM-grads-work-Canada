@@ -142,11 +142,15 @@ write(datSankeyJSON, "../datSankey.json")
 
 head(datSankey)
 require(googleVis)
+
 plot(
-  gvisSankey(datSankey[,1:3], from="From", 
+  gvisSankey(datSankey[datSankey$Weight>5000,1:3], from="From", 
              to="To", weight="Weight",
              options=list(
                height=500,
-               sankey="{link:{color:{fill:'lightblue'}}}"
-             ))
+               width=800,
+               sankey="{link: {color: { fill: '#A0A0A0' } },
+                                     node: { color: { fill: '#BADA55' },
+                                     label: { color: '#871b47' } }}"
+               ))
 )
