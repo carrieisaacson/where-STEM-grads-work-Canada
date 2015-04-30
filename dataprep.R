@@ -1,6 +1,9 @@
 ## Libraries ####
 library(magrittr)
 library(dplyr)
+library(reshape2)
+library(jsonlite)
+
 ## Read Data ####
 
 # Read first two rows - combine into single header
@@ -24,7 +27,14 @@ dat <- read.csv("../Major Field STEM NOC.csv",
                 stringsAsFactors = F)
 names(dat) <- header
 
-## NOC codes ####
+## NOC-S Codes - Classifying STEM ####
+# There is no formally defined list of NOC-S codes that should be considered "STEM" as
+# there is for the US SOC codes.
+# I pulled apart the NOC-S codes and categorized them by STEM / non-STEM according to
+# this listing created by EMSI. NOC-S category C is fairly unambiguously STEM.
+# Category E codes E02 and E03 are a mix of STEM and non-STEM, so these needed to be
+# separated carefully.
+# http://www.economicmodeling.com/2013/06/27/defining-stem-occupations-for-canada/
 
 # Strip all them extra spaces
 dat$Occupation <- gsub("\\s{2}", "", dat$Occupation)
@@ -86,6 +96,57 @@ dat_STEM_E03 <- data.frame( Occupation = "E03 STEM Policy and program officers, 
 dat_STEM <- merge(dat_STEM, dat_STEM_E03, all.x = T, all.y = T)
 dat_STEM$stem <- T
 
+## Data complete in wide form ####
 dat <- merge(dat_nonSTEM, dat_STEM, all.x = T, all.y = T)
-
 write.csv(dat, "../Table - Major Field STEM vs NOC STEM.csv", row.names=F)
+
+## Convert to Wide Form for Sankey Plot ####
+# For the purposes of Sankey Plots:
+#   "From" == Discipline of Study
+#   "To"   == NOC-S Description AKA NOCdesc
+#   "Weight"  ==  Total count for that cell, N
+
+datl <- reshape(dat[,2:28], varying = names(dat)[2:25], v.names = "Weight", 
+        times = names(dat)[2:25], timevar = "From", direction="long")
+names(datl)[names(datl)=="NOCdesc"] <- "To"
+head(datl)
+
+datSankey <- select(datl, From, To, Weight, stem) %>% 
+  subset(From != "Education_STEM" &
+           From != "Visual_and_performing_arts_and_communications_technologies_STEM" &
+           From != "Humanities_STEM" &
+           From != "Social_and_behavioural_sciences_and_law_STEM" &
+           From != "Business_management_and_public_administration_STEM" &
+           From != "Physical_and_life_sciences_and_technologies_nonSTEM" & 
+           From != "Personal_protective_and_transportation_services_STEM" &
+           From != "Other_fields_of_study_STEM" &
+           From != "Other_fields_of_study_nonSTEM")
+
+datSankey$From <- gsub("_", " ", datSankey$From)
+datSankey$From <- gsub("nonSTEM", "", datSankey$From)
+datSankey$From <- gsub("STEM", "(STEM)", datSankey$From)
+datSankey$From <- gsub(" $", "", datSankey$From)
+
+write.csv(datSankey, "../datSankey.csv", row.names=F)
+
+datSankeyJSON <- toJSON(datSankey)
+write(datSankeyJSON, "../datSankey.json")
+
+## GoogleVis Sankey Plot ####
+# TODO: Move this into a separate file
+# Auto-generate Sankey Plot using package googleVis
+# Needs some significant modifications!
+# How to get labels to the outside??
+# Colour nodes??
+# Colour on hover??
+
+head(datSankey)
+require(googleVis)
+plot(
+  gvisSankey(datSankey[,1:3], from="From", 
+             to="To", weight="Weight",
+             options=list(
+               height=500,
+               sankey="{link:{color:{fill:'lightblue'}}}"
+             ))
+)
