@@ -109,26 +109,99 @@ write.csv(dat, "../Table - Major Field STEM vs NOC STEM.csv", row.names=F)
 datl <- reshape(dat[,2:28], varying = names(dat)[2:25], v.names = "Weight", 
         times = names(dat)[2:25], timevar = "From", direction="long")
 names(datl)[names(datl)=="NOCdesc"] <- "To"
-head(datl)
 
-datBipartite <- select(datl, From, To, Weight, stem) %>% 
-  subset(From != "Education_STEM" &
-           From != "Visual_and_performing_arts_and_communications_technologies_STEM" &
-           From != "Humanities_STEM" &
-           From != "Social_and_behavioural_sciences_and_law_STEM" &
-           From != "Business_management_and_public_administration_STEM" &
-           From != "Physical_and_life_sciences_and_technologies_nonSTEM" & 
-           From != "Personal_protective_and_transportation_services_STEM" &
-           From != "Other_fields_of_study_STEM" &
-           From != "Other_fields_of_study_nonSTEM")
+# Omit educational majors with fewer than 10000 people (note: total sample 4,138,000, 
+# too small to be displayed properly)
+datl$fromN <- ave(datl[,"Weight"],  # Count
+    datl[,"From"],    # Stratifying variable
+    FUN = sum)
+datl <- datl %>% subset(fromN > 10000)
 
-datBipartite$From <- gsub("_", " ", datBipartite$From)
-datBipartite$From <- gsub("nonSTEM", "", datBipartite$From)
-datBipartite$From <- gsub("STEM", "(STEM)", datBipartite$From)
-datBipartite$From <- gsub(" $", "", datBipartite$From)
+# Drop some unhelpful columns
+datl <- select(datl, From, To, Weight, stem)
 
-write.csv(datBipartite, "../datBipartite.csv", row.names=F)
+# Pretty up the discipline of study names
 
-datBipartiteJSON <- toJSON(datBipartite, dataframe="values")
-write(datBipartiteJSON, "../datBipartite.json")
+gsub( "_", " ", datl$From ) %>% 
+  gsub( "nonSTEM", "", . ) %>% 
+  gsub( "STEM", "(STEM)", . ) %>%
+  gsub( " $", "", . ) %>%
+  gsub( "Visual and performing arts and communications technologies", "Visual arts, performing arts and communications", .) %>%
+  gsub( "Physical and life sciences and technologies (STEM)", "Physical and life sciences (STEM)", . ) %>%
+  gsub( "Mathematics computer and information sciences", "Math, computer and information sciences", .) %>%
+  gsub( "Architecture engineering and related technologies", "Architecture and engineering", . ) %>% 
+  gsub( "Agriculture natural resources and conservation","Agriculture, natural resources and conservation", . ) %>%
+  gsub( "Health and related fields", "Health", . ) %>%
+  gsub( "Personal protective and transportation services", "Personal, protective and transportation services", .) -> datl$From
+
+
+
+gsub( "Management occupations", "Management", datl$To) %>%
+  gsub( "Business, finance and administrative occupations", "Business, finance and administrative", . ) %>%
+  gsub( " professionals$", "", . ) %>% 
+  gsub( "Architects, urban planners and land surveyors", "Architects, urban planners, land surveyors", . ) %>%
+  gsub( "Technical occupations related to natural and applied sciences", "Natural and applied sciences", . ) %>%
+  gsub( "Health occupations", "Health", . ) %>%
+  gsub( "Policy and program officers, researchers and consultants", "Policy and program officers, researchers, consultants", . ) %>%
+  gsub( "Paralegals, social services workers and occupations in education and religion, n.e.c.", 
+        "Paralegals, social services workers, education and religion", . ) %>%
+  gsub( "Occupations in art, culture, recreation and sport", "Art, culture, recreation and sport", . ) %>%
+  gsub( "Sales and service occupations", "Sales and service", . ) %>%
+  gsub( "Trades, transport and equipment operators and related occupations",  "Trades, transport and equipment operators", . ) %>%
+  gsub( "Occupations unique to p", "P", . ) -> datl$To
+
+# Change the order of field of study STEM - HEALTH - OTHER THINGS
+
+edOrder <- c("Physical and life sciences and technologies (STEM)", 
+             "Math, computer and information sciences (STEM)", 
+             "Architecture and engineering (STEM)",                         
+             "Agriculture, natural resources and conservation (STEM)",
+             "Health (STEM)",   
+             "Health",
+             "Agriculture, natural resources and conservation",                                        
+             "Architecture and engineering",
+             "Math, computer and information sciences",
+             "Social and behavioural sciences and law",
+             "Personal, protective and transportation services",
+             "Education",
+             "Visual arts, performing arts and communications",
+             "Humanities",
+             "Business management and public administration" )
+
+datl <- datl[order(match(datl$From, edOrder)),]
+
+# Order occupations STEM - HEALTH - OTHER THINGS
+
+occOrder <- c("Physical science",
+              "Life science",
+              "Computer and information systems",
+              "Civil, mechanical, electrical and chemical engineers",         
+              "Other engineers",                                                 
+              "Architects, urban planners, land surveyors",                      
+              "Mathematicians, statisticians and actuaries",                            
+              "Natural and applied sciences",
+              "Policy and program officers, researchers, consultants (STEM)",
+              "Psychologists",
+              "Health",
+              "Judges, lawyers and Quebec notaries",
+              "Social workers, counsellors, clergy and probation officers",
+              "Policy and program officers, researchers, consultants (non-STEM)",
+              "Paralegals, social services workers, education and religion",
+              "Art, culture, recreation and sport",
+              "Teachers and professors",
+              "Sales and service",
+              "Management",
+              "Business, finance and administrative",
+              "Trades, transport and equipment operators",
+              "Primary industry",
+              "Processing, manufacturing and utilities")
+
+datl <- datl[order(match(datl$To, occOrder)),]
+
+unique(datl$To)
+unique(datl$From)
+
+write.csv(datl, "../datBipartite.csv", row.names=F)
+
+write(toJSON(datl, dataframe="values"), "../datBipartite.json")
 

@@ -1,6 +1,6 @@
 -function () {
     var bP = {};
-    var mainRectWidth = 80, buffMargin = 1, minHeight = 14;
+    var mainRectWidth = 60, buffMargin = 1, minHeight = 14;
 
     var me = this;
     this.options = {
