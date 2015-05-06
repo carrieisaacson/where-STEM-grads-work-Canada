@@ -100,8 +100,8 @@ dat_STEM$stem <- T
 dat <- merge(dat_nonSTEM, dat_STEM, all.x = T, all.y = T)
 write.csv(dat, "../Table - Major Field STEM vs NOC STEM.csv", row.names=F)
 
-## Convert to Wide Form for Sankey Plot ####
-# For the purposes of Sankey Plots:
+## Convert to Wide Form for BiPartite Plot ####
+# For the purposes of BiPartite Plots:
 #   "From" == Discipline of Study
 #   "To"   == NOC-S Description AKA NOCdesc
 #   "Weight"  ==  Total count for that cell, N
@@ -111,7 +111,7 @@ datl <- reshape(dat[,2:28], varying = names(dat)[2:25], v.names = "Weight",
 names(datl)[names(datl)=="NOCdesc"] <- "To"
 head(datl)
 
-datSankey <- select(datl, From, To, Weight, stem) %>% 
+datBipartite <- select(datl, From, To, Weight, stem) %>% 
   subset(From != "Education_STEM" &
            From != "Visual_and_performing_arts_and_communications_technologies_STEM" &
            From != "Humanities_STEM" &
@@ -122,35 +122,13 @@ datSankey <- select(datl, From, To, Weight, stem) %>%
            From != "Other_fields_of_study_STEM" &
            From != "Other_fields_of_study_nonSTEM")
 
-datSankey$From <- gsub("_", " ", datSankey$From)
-datSankey$From <- gsub("nonSTEM", "", datSankey$From)
-datSankey$From <- gsub("STEM", "(STEM)", datSankey$From)
-datSankey$From <- gsub(" $", "", datSankey$From)
+datBipartite$From <- gsub("_", " ", datBipartite$From)
+datBipartite$From <- gsub("nonSTEM", "", datBipartite$From)
+datBipartite$From <- gsub("STEM", "(STEM)", datBipartite$From)
+datBipartite$From <- gsub(" $", "", datBipartite$From)
 
-write.csv(datSankey, "../datSankey.csv", row.names=F)
+write.csv(datBipartite, "../datBipartite.csv", row.names=F)
 
-datSankeyJSON <- toJSON(datSankey)
-write(datSankeyJSON, "../datSankey.json")
+datBipartiteJSON <- toJSON(datBipartite, dataframe="values")
+write(datBipartiteJSON, "../datBipartite.json")
 
-## GoogleVis Sankey Plot ####
-# TODO: Move this into a separate file
-# Auto-generate Sankey Plot using package googleVis
-# Needs some significant modifications!
-# How to get labels to the outside??
-# Colour nodes??
-# Colour on hover??
-
-head(datSankey)
-require(googleVis)
-
-plot(
-  gvisSankey(datSankey[datSankey$Weight>5000,1:3], from="From", 
-             to="To", weight="Weight",
-             options=list(
-               height=500,
-               width=800,
-               sankey="{link: {color: { fill: '#A0A0A0' } },
-                                     node: { color: { fill: '#BADA55' },
-                                     label: { color: '#871b47' } }}"
-               ))
-)
