@@ -14,12 +14,13 @@ rect {
     shape-rendering: auto;
 }
 
-    .mainrect.selected {
-        stroke-opacity: 1;
-    }
+.mainrect.selected {
+    stroke-opacity: 1;
+}
 
 .barlabel, .barvalue, .barpercent {
     font-weight: normal;
+    font-family: 'Roboto', sans-serif;
 }
 
 .barpercent {

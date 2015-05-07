@@ -1,13 +1,50 @@
 ﻿<!DOCTYPE html>
 <meta charset="utf-8">
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
 <style>
     body {
+        font-family: 'Roboto', sans-serif;
+        background: #E8E8EE;
+    }
+    .graph-container {
         width: 1200px;
-        margin: 30px auto;
-        font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+        height: 640px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 20px;
+        position: relative;
+    }
+    
+    h1{
+        font-family: 'Roboto', sans-serif;
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 24px;
+    }
+
+    .field-study, .occupation {
+        font-family: 'Roboto', sans-serif;
+        position: absolute;
+        top: 80px;
+        font-size: 22px;
+    }
+
+    .field-study {
+        left: 140px;
+    }
+    .occupation {
+        left: 900px;
     }
 </style><link rel="stylesheet" type="text/css" href="bipartite.css">
 <body>
+
+    <div class="graph-container">
+        <h1>Where do university graduates work in Canada?</h1>
+        <div class="field-study">Field of Study</div>
+        <div class="occupation">Occupation</div>
+    </div>
 
     <script src="d3/d3.min.js"></script>
     <script src="biPartite.js"></script>
@@ -385,9 +422,9 @@
             barPercentFontSize: "8",
             width : 1200,
             height : 500,
-            margin : { b: 0, t: 10, l: 380, r: 50 }
+            margin : { b: 0, t: 125, l: 410, r: 50 }
         });
-        bP.draw(data,'body');
+        bP.draw(data,'.graph-container');
 
     </script>
 </body>
